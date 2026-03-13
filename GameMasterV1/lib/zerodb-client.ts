@@ -119,10 +119,11 @@ class ZeroDBClient {
         return false;
       }
 
-      const data = await response.json();
-      const rows = data.rows || [];
+      const result = await response.json();
+      // ZeroDB returns data in 'data' array, not 'rows'
+      const entries = result.data || [];
 
-      return rows.some((row: any) => row.row_data?.email === email);
+      return entries.some((entry: any) => entry.row_data?.email === email);
     } catch (error) {
       console.error('Error checking email:', error);
       return false;
