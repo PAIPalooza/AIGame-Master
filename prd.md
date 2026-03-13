@@ -1,532 +1,475 @@
----
-
-# Product Requirements Document
-
-# AI Game Master (AI GM)
+# AI-Native Game Worlds
 
 Version: 1.0
-Author: AINative Studio
-Platform: ZeroDB + AIKit
-Context: Extension of Moonvale AI-Native Game World Demo
+Purpose: Generate a live working demo during a workshop in minutes
+Builder: Claude Code
 
 ---
 
-# 1. Product Overview
+# 1. Demo Goal
 
-AI Game Master is a **dynamic narrative engine** that acts as a Dungeon Master for AI-native games.
+Show that **game worlds can remember, learn, and evolve** using ZeroDB.
 
-Instead of static quests and scripted dialogue, the AI GM:
+The demo must prove:
 
-* generates quests dynamically
-* narrates player actions
-* adapts difficulty
-* references player history
-* reacts to world state
+1. Player data persists
+2. NPC remembers player actions
+3. Lore can be searched semantically
+4. Player actions generate telemetry
+5. World events react to player behavior
 
-The AI Game Master uses **ZeroDB as the persistent world memory layer** and **AIKit LLM orchestration for narrative generation**.
-
-This creates a **living text-based game world** where stories evolve based on actual player behavior.
+All within **one simple dashboard UI**.
 
 ---
 
-# 2. Problem Statement
+# 2. The Demo Story
 
-Modern games still rely heavily on:
+The game world is called:
 
-* pre-written quest trees
-* static NPC dialogue
-* scripted world events
+**Moonvale**
 
-This creates predictable gameplay.
+The player meets an NPC historian named:
 
-Players increasingly want:
+**Elarin**
 
-* dynamic storytelling
-* worlds that remember them
-* NPCs that react to history
-* unique player journeys
+The player can:
 
-The **GDC 2026 State of the Industry Report** highlights **emergent narrative systems** as one of the fastest growing trends in game design.
+* ask questions
+* explore
+* fight wolves
 
-However, building these systems typically requires:
+If the player defeats **3 wolves**, a world event triggers.
 
-* custom AI infrastructure
-* complex backend architecture
-* large narrative teams
-
-AI Game Master solves this by combining:
-
-**ZeroDB persistent world memory + AIKit narrative AI.**
+NPC memory updates after interactions.
 
 ---
 
-# 3. Product Vision
+# 3. Technology Stack
 
-Create a **universal AI Game Master engine** capable of running persistent game worlds where:
+Claude Code should generate:
 
-* quests are generated dynamically
-* the story reacts to player decisions
-* NPCs remember past interactions
-* world history accumulates over time
+Frontend
+Next.js (single page)
 
-Players should feel like they are participating in **their own evolving fantasy novel.**
+Backend
+Next.js API routes
 
----
+Database
+ZeroDB
 
-# 4. Key Features
+No authentication required.
 
-## 4.1 Dynamic Quest Generation
-
-The AI GM generates quests based on:
-
-* player reputation
-* recent events
-* world history
-* faction alignment
-* region activity
-
-Example:
-
-Player killed wolves → AI GM generates quest:
-
-“Track the alpha wolf deeper into the northern forest.”
+No complex state management.
 
 ---
 
-## 4.2 Narrative Action Resolution
+# 4. Core Data Models
 
-Players can perform actions such as:
+Only **five collections**.
 
-```
-Explore cave
-Attack bandit
-Sneak past guards
-Investigate ruins
+---
+
+## Player
+
+```json
+{
+"id": "uuid",
+"username": "string",
+"class": "string",
+"level": 1,
+"xp": 0
+}
 ```
 
-The AI GM narrates outcomes using world context.
+---
 
-Example response:
+## NPC
 
-“You slip quietly into the ruined tower. The scent of ash still lingers from the Ember Tower collapse.”
+```json
+{
+"id": "uuid",
+"name": "Elarin",
+"role": "Historian",
+"location": "Moonvale"
+}
+```
 
 ---
 
-## 4.3 Adaptive Difficulty
+## NPC Memory
 
-The AI GM adjusts difficulty based on:
-
-* player level
-* previous combat outcomes
-* equipment
-* party size (future feature)
-
----
-
-## 4.4 Persistent Narrative Memory
-
-The AI GM references stored data such as:
-
-* NPC memories
-* past quests
-* player decisions
-* world events
-
-Example:
-
-“Elarin remembers when you drove the wolves from Moonvale.”
-
----
-
-## 4.5 Emergent World Simulation
-
-Player actions influence the world.
+```json
+{
+"id": "uuid",
+"npc_id": "uuid",
+"player_id": "uuid",
+"memory": "string",
+"importance": 1
+}
+```
 
 Examples:
 
-* wolves disappear → forest trade improves
-* excessive hunting → ecosystem imbalance
-* aiding faction → faction influence grows
+* "Player asked about Ember Tower"
+* "Player defeated wolves near Moonvale"
 
 ---
 
-## 4.6 Player Creativity Rewards
+## Lore
 
-Players are encouraged to try creative actions.
+Vector searchable.
 
-Example input:
-
+```json
+{
+"id": "uuid",
+"title": "string",
+"content": "string",
+"embedding": "vector"
+}
 ```
-Climb the ruined tower and look for magical artifacts
-```
 
-AI GM evaluates plausibility and narrates results.
+Seed entries:
+
+1.
+
+"The Ember Tower collapsed after a magical experiment."
+
+2.
+
+"Moonvale was founded by the Forest Guild."
+
+3.
+
+"Wolves often attack travelers near the northern forest."
 
 ---
 
-# 5. System Architecture
+## Game Events
 
-```mermaid
-graph TD
-
-Player Input
-    ↓
-AI Game Master Engine
-    ↓
-AIKit LLM
-
-AIKit LLM
-    ↓
-Context Retrieval Layer
-
-Context Retrieval Layer
-    ↓
-ZeroDB
-
-ZeroDB
-    ↓
-World State
-NPC Memory
-Lore
-Events
-Quests
+```json
+{
+"id": "uuid",
+"player_id": "uuid",
+"type": "string",
+"timestamp": "datetime"
+}
 ```
+
+Examples
+
+* explore
+* wolf_kill
+* npc_conversation
 
 ---
 
-# 6. Data Model Extensions
+# 5. Emergent World Event
 
-The Moonvale schema already includes:
+Rule:
 
-* players
-* npc_memories
-* lore
-* game_events
-* world_events
+```
+IF player wolf_kill >= 3
+THEN trigger world event
+```
 
-AI Game Master adds three new tables.
+World event:
+
+**Wolf Pack Retreat**
+
+Description:
+
+"Wolf activity around Moonvale has suddenly decreased."
+
+Store event in DB.
+
+Display in UI.
 
 ---
 
-# 6.1 Quests
+# 6. Minimal API Routes
 
-```sql
-CREATE TABLE quests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT,
-    description TEXT,
-    difficulty INTEGER,
-    status TEXT,
-    player_id UUID REFERENCES players(id),
-    created_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-Example
-
-```
-Track the Alpha Wolf
-Status: active
-Difficulty: 2
-```
+Claude Code should generate only these.
 
 ---
 
-# 6.2 Narrative Logs
+## Create Player
 
-Stores AI GM narration history.
+POST
 
-```sql
-CREATE TABLE narrative_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID REFERENCES players(id),
-    input TEXT,
-    gm_response TEXT,
-    metadata JSONB,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+```
+/api/player
 ```
 
 ---
 
-# 6.3 World State
+## Talk to NPC
 
-Persistent simulation variables.
-
-```sql
-CREATE TABLE world_state (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    key TEXT,
-    value JSONB,
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-Example
+POST
 
 ```
-wolf_population: reduced
-moonvale_trade: increasing
-forest_danger_level: low
+/api/npc/talk
+```
+
+Logic:
+
+1 retrieve lore via vector search
+2 retrieve NPC memories
+3 generate response
+4 store memory
+
+---
+
+## Record Event
+
+POST
+
+```
+/api/event
 ```
 
 ---
 
-# 7. AI Game Master Engine
+## Check World State
 
-The GM engine performs the following steps.
+GET
+
+```
+/api/world
+```
+
+Checks wolf kill count.
+
+Creates event if needed.
 
 ---
 
-## Step 1: Receive Player Action
+# 7. One Page UI
 
-Example:
-
-```
-Player: "Investigate Ember Tower ruins"
-```
+Simple dashboard.
 
 ---
 
-## Step 2: Retrieve Context from ZeroDB
+## Section 1 — Player
 
-Retrieve:
-
-* player data
-* NPC memory
-* recent events
-* world state
-* lore entries
-
----
-
-## Step 3: Build Narrative Prompt
-
-Example prompt structure:
+Button
 
 ```
-You are the AI Game Master for Moonvale.
+Create Player
+```
 
-Player history:
-- defeated wolves
-- asked about Ember Tower
+Displays
 
-World state:
-- wolves retreating
-
-Relevant lore:
-- Ember Tower collapse
+```
+Name
+Class
+Level
+XP
 ```
 
 ---
 
-## Step 4: Generate Outcome
-
-AIKit LLM produces narration.
-
-Example:
-
-“Among the rubble you discover a glowing shard of arcane glass.”
-
----
-
-## Step 5: Persist Narrative
-
-Store result in:
-
-```
-narrative_logs
-```
-
----
-
-## Step 6: Update World
-
-Possible updates:
-
-* add NPC memory
-* generate quest
-* trigger event
-
----
-
-# 8. API Endpoints
-
-## Generate Quest
-
-```
-POST /api/gm/quest
-```
-
-Returns new dynamic quest.
-
----
-
-## Player Action
-
-```
-POST /api/gm/action
-```
+## Section 2 — Talk to NPC
 
 Input
 
 ```
-player_id
-action
+Ask Elarin something
 ```
 
-Output
+Button
 
 ```
-gm_response
+Send
+```
+
+NPC response appears.
+
+---
+
+## Section 3 — Actions
+
+Buttons
+
+```
+Explore Forest
+Fight Wolf
+Talk to NPC
+```
+
+Each button sends events.
+
+---
+
+## Section 4 — World Events
+
+Display triggered events.
+
+Example:
+
+```
+Wolf Pack Retreat
 ```
 
 ---
 
-## Get Narrative History
+## Section 5 — NPC Memory Viewer
+
+List memories.
+
+Example:
 
 ```
-GET /api/gm/history
+Player asked about Ember Tower
+Player defeated wolves near Moonvale
+```
+
+This part **blows people's minds** during demos.
+
+---
+
+# 8. Demo Script (2 minutes)
+
+Instructor does this live.
+
+Step 1
+
+Create Player
+
+---
+
+Step 2
+
+Ask NPC:
+
+```
+What happened to Ember Tower?
+```
+
+NPC answers using lore.
+
+---
+
+Step 3
+
+Click
+
+```
+Fight Wolf
+Fight Wolf
+Fight Wolf
 ```
 
 ---
 
-## Get Active Quests
+Step 4
+
+World Event triggers
 
 ```
-GET /api/quests
-```
-
----
-
-# 9. UI Design
-
-Extend the Moonvale dashboard.
-
-New panel:
-
-## AI Game Master Console
-
-Input field:
-
-```
-What do you want to do?
-```
-
-Example commands
-
-```
-Investigate ruins
-Follow wolf tracks
-Talk to Elarin
-Search the forest
-```
-
-Output
-
-Narrative response.
-
----
-
-# 10. Example Gameplay Loop
-
-1 Player enters action
-
-```
-Search the forest
-```
-
-2 AI GM narrates
-
-3 System logs event
-
-4 Quest may appear
-
-5 World state updates
-
-6 NPC remembers event
-
----
-
-# 11. Example Gameplay Session
-
-Player actions
-
-```
-Ask Elarin about wolves
-Explore forest
-Fight wolf
-Follow tracks
-```
-
-AI GM responses
-
-```
-You notice deeper tracks leading north.
-```
-
-New quest appears
-
-```
-Track the Alpha Wolf
+Wolf Pack Retreat
 ```
 
 ---
 
-# 12. Demo Use Case (Workshop)
+Step 5
 
-Instructor demonstrates:
+Talk to NPC again.
 
-1 Player asks AI GM what to do
-2 AI GM generates quest
-3 Player performs actions
-4 AI GM narrates outcomes
-5 NPC references past events
-6 New quests appear
+NPC says something like:
 
-Shows:
+```
+I heard you drove the wolves away from Moonvale.
+```
 
-* persistent narrative
-* AI world building
-* memory driven storytelling
+Memory proven.
 
 ---
 
-# 13. Success Criteria
+# 9. Seed Data
 
-Demo is successful if:
+NPC
 
-* quests generate dynamically
-* AI narration references history
-* world state updates
-* NPC memory evolves
-* player actions influence the world
+```
+Elarin
+Village Historian
+Moonvale
+```
+
+Lore
+
+1
+
+```
+The Ember Tower collapsed after a magical experiment.
+```
+
+2
+
+```
+Moonvale was founded by the Forest Guild.
+```
+
+3
+
+```
+Wolves often attack travelers near the northern forest.
+```
+
+---
+
+# 10. Claude Code Prompt
+
+Use this **exact prompt to generate the demo**.
+
+```
+Build a minimal AI-native game world demo using Next.js and ZeroDB.
+
+Create a single page dashboard with:
+
+Create Player button
+NPC chat interface
+Gameplay action buttons (explore, fight wolf)
+World events display
+NPC memory viewer
+
+Data models:
+
+Player
+NPC
+NPCMemory
+Lore (vector searchable)
+GameEvents
+
+Seed the world with:
+
+NPC: Elarin (Historian in Moonvale)
+
+Lore entries:
+Ember Tower collapse
+Moonvale founding
+Wolf attacks
+
+Gameplay logic:
+
+When the player kills 3 wolves, create a world event called
+"Wolf Pack Retreat".
+
+NPC responses should use lore retrieval and stored NPC memory.
+
+Ensure the demo runs locally and is easy to start.
+```
 
 ---
 
-# 14. Future Expansion
+# 11. Expected Build Time
 
-Planned features:
+Claude Code generation time:
 
-* multi-player worlds
-* AI NPC agents
-* faction politics
-* procedural world maps
-* AI-driven economies
-* RLHF training loops
+**2–5 minutes**
 
----
+Run time:
 
-# 15. Strategic Importance for AINative
-
-AI Game Master demonstrates:
-
-* ZeroDB persistent memory
-* AIKit LLM orchestration
-* emergent AI gameplay systems
-
-This positions AINative as infrastructure for:
-
-**AI-native game development.**
+**instant**
 
 ---
+
