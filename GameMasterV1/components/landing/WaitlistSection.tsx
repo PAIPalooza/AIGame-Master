@@ -6,12 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { zeroDBClient } from '@/lib/zerodb-client';
 
 export function WaitlistSection() {
   const [email, setEmail] = useState('');
@@ -28,29 +23,30 @@ export function WaitlistSection() {
     setIsSubmitting(true);
 
     try {
-      const { error: submitError } = await supabase
-        .from('waitlist_signups')
-        .insert({
-          email,
-          role: role || null,
-          company: company || null,
-          interested_in_paid: interestedInPaid,
-        });
-
-      if (submitError) {
-        if (submitError.code === '23505') {
-          setError('This email is already on the waitlist!');
-        } else {
-          setError('Something went wrong. Please try again.');
-        }
-      } else {
-        setIsSuccess(true);
-        setEmail('');
-        setRole('');
-        setCompany('');
-        setInterestedInPaid(false);
+      // Check if email already exists
+      const emailExists = await zeroDBClient.emailExists(email);
+      if (emailExists) {
+        setError('This email is already on the waitlist!');
+        setIsSubmitting(false);
+        return;
       }
+
+      // Submit to ZeroDB
+      await zeroDBClient.submitWaitlist({
+        email,
+        role: role || undefined,
+        company: company || undefined,
+        interested_in_paid: interestedInPaid,
+      });
+
+      // Success!
+      setIsSuccess(true);
+      setEmail('');
+      setRole('');
+      setCompany('');
+      setInterestedInPaid(false);
     } catch (err) {
+      console.error('Waitlist submission error:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setIsSubmitting(false);
