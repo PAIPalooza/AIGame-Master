@@ -473,14 +473,20 @@ export function getGameEvents(playerId?: string, eventType?: string): GameEvent[
             });
         }
 
-        // Optimize: Filter by eventType using filename pattern (if provided)
+        // Optimize: Filter by eventType using filename substring match
+        // Note: Cannot use positional split because event types may contain underscores
+        // (e.g., wolf_kill → "wolf" and "kill" split into separate positions)
         if (eventType) {
             const sanitizedEventType = eventType.replace(/[^a-z0-9_]/gi, '_');
-            eventFiles = eventFiles.filter(f => {
-                const parts = f.split('_');
-                // Check if filename contains eventType in expected position (index 3)
-                return parts.length >= 4 && parts[3] === sanitizedEventType;
-            });
+            const beforeFilter = eventFiles.length;
+            eventFiles = eventFiles.filter(f =>
+                f.includes('_' + sanitizedEventType + '_')
+            );
+            // Fallback: if filename filter excluded everything, reload all event files
+            // and rely on JSON content filtering below
+            if (eventFiles.length === 0 && beforeFilter > 0) {
+                eventFiles = files.filter(f => f.startsWith('game_event_') && f.endsWith('.json'));
+            }
         }
 
         // Load only the filtered files
@@ -569,8 +575,12 @@ export function clearAllData(): void {
         const files = fs.readdirSync(DATA_DIR);
         files.forEach(file => {
             const filePath = path.join(DATA_DIR, file);
-            if (fs.statSync(filePath).isFile() && file.endsWith('.json')) {
-                fs.unlinkSync(filePath);
+            try {
+                if (fs.statSync(filePath).isFile() && (file.endsWith('.json') || file.includes('.tmp.'))) {
+                    fs.unlinkSync(filePath);
+                }
+            } catch {
+                // File may have been removed by atomic write cleanup
             }
         });
     } catch (error) {
