@@ -610,3 +610,155 @@ export function isNarrativeLog(obj: unknown): obj is NarrativeLog {
     'createdAt' in obj
   );
 }
+
+// ============================================================================
+// Quest System Types (Epic 5: Issues #12, #13)
+// ============================================================================
+
+/**
+ * QuestObjective represents a single objective within a quest.
+ * Matches quest_objectives SQL schema in datamodel.md.
+ */
+export interface QuestObjective {
+  id: string;
+  questId: string;
+  description: string;
+  type: 'kill' | 'collect' | 'explore' | 'talk' | 'deliver' | 'custom';
+  targetCount: number;
+  currentCount: number;
+  isCompleted: boolean;
+  orderIndex: number;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * QuestProgress tracks a player's progress on a specific quest.
+ * Matches quest_progress schema in datamodel.md.
+ */
+export interface QuestProgress {
+  id: string;
+  questId: string;
+  playerId: string;
+  status: 'not_started' | 'in_progress' | 'completed' | 'failed';
+  objectiveProgress: Record<string, number>;
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================================================
+// World State Types (Epic 6: Issues #14, #15)
+// ============================================================================
+
+/**
+ * WorldState represents a key-value world state entry scoped by type and ID.
+ * Matches world_state SQL schema in datamodel.md.
+ */
+export interface WorldState {
+  id: string;
+  scopeType: 'global' | 'region' | 'faction' | 'npc';
+  scopeId: string;
+  key: string;
+  value: string | number | boolean;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * WorldMetric represents a named numeric metric for world simulation.
+ * Matches world_metrics SQL schema in datamodel.md.
+ */
+export interface WorldMetric {
+  id: string;
+  name: string;
+  value: number;
+  minValue: number;
+  maxValue: number;
+  category: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * TriggerRule defines a condition that, when met, fires a world event.
+ */
+export interface TriggerRule {
+  id: string;
+  name: string;
+  description: string;
+  conditionType: 'event_count' | 'metric_threshold' | 'state_value';
+  conditionConfig: {
+    eventType?: string;
+    metricName?: string;
+    stateKey?: string;
+    threshold: number;
+    comparison: 'gte' | 'lte' | 'eq' | 'gt' | 'lt';
+  };
+  eventName: string;
+  eventDescription: string;
+  oneTimePerPlayer: boolean;
+  isActive: boolean;
+  createdAt: string;
+}
+
+// ============================================================================
+// Feedback Types (Epic 8: Issue #17)
+// ============================================================================
+
+/**
+ * PlayerFeedback represents player feedback on a game element.
+ * Matches player_feedback schema in datamodel.md.
+ */
+export interface PlayerFeedback {
+  id: string;
+  playerId: string;
+  targetType: 'narrative' | 'quest' | 'npc' | 'world_event' | 'general';
+  targetId?: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+}
+
+// ============================================================================
+// Additional Type Guards
+// ============================================================================
+
+export function isQuestObjective(obj: unknown): obj is QuestObjective {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'questId' in obj &&
+    'description' in obj &&
+    'type' in obj &&
+    'targetCount' in obj
+  );
+}
+
+export function isWorldState(obj: unknown): obj is WorldState {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'scopeType' in obj &&
+    'scopeId' in obj &&
+    'key' in obj &&
+    'value' in obj
+  );
+}
+
+export function isPlayerFeedback(obj: unknown): obj is PlayerFeedback {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'id' in obj &&
+    'playerId' in obj &&
+    'targetType' in obj &&
+    'rating' in obj
+  );
+}
