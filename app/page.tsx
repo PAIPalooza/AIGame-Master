@@ -23,13 +23,15 @@ export default function Home() {
   const [aiKitPrompt, setAIKitPrompt] = useState('');
 
   useEffect(() => {
-    fetchPlayer();
-    fetchMemories();
-    fetchEvents();
-    fetchWorldState();
-    fetchLore();
-    fetchStats();
-    fetchQuests();
+    seedWorldIfEmpty().then(() => {
+      fetchPlayer();
+      fetchMemories();
+      fetchEvents();
+      fetchWorldState();
+      fetchLore();
+      fetchStats();
+      fetchQuests();
+    });
   }, []);
 
   const fetchPlayer = async () => {
@@ -37,10 +39,24 @@ export default function Home() {
       const res = await fetch('/api/player/current');
       if (res.ok) {
         const data = await res.json();
-        setPlayer(data);
+        setPlayer(data.player || data);
       }
     } catch (error) {
       console.error('Error fetching player:', error);
+    }
+  };
+
+  const seedWorldIfEmpty = async () => {
+    try {
+      const res = await fetch('/api/admin/reset', { method: 'GET' });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status?.loreCount === 0) {
+          await fetch('/api/admin/reset', { method: 'POST' });
+        }
+      }
+    } catch (error) {
+      console.error('Error seeding world:', error);
     }
   };
 
@@ -50,8 +66,10 @@ export default function Home() {
       const res = await fetch('/api/player/create', { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
-        setPlayer(data);
+        setPlayer(data.player || data);
         await fetchWorldState();
+        await fetchMemories();
+        await fetchEvents();
       }
     } catch (error) {
       console.error('Error creating player:', error);
