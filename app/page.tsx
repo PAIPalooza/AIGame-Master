@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { Player, NPCMemory, GameEvent, WorldEvent } from '@/lib/types';
 import ActionInput from '@/components/ActionInput';
+import NarrativeOutput from '@/components/NarrativeOutput';
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -264,12 +265,11 @@ export default function Home() {
               placeholder="Ask Elarin something..."
             />
 
-            {npcResponse && (
-              <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg p-4">
-                <p className="text-sm text-purple-300 font-semibold mb-2">Elarin says:</p>
-                <p className="text-gray-100">{npcResponse}</p>
-              </div>
-            )}
+            <NarrativeOutput
+              npcName="Elarin"
+              response={npcResponse}
+              loading={loading}
+            />
           </div>
         </section>
 
