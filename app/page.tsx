@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import type { Player, NPCMemory, GameEvent, WorldEvent } from '@/lib/types';
 import ActionInput from '@/components/ActionInput';
 import NarrativeOutput from '@/components/NarrativeOutput';
+import QuestDisplay from '@/components/QuestDisplay';
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -16,6 +17,7 @@ export default function Home() {
   const [lore, setLore] = useState<any[]>([]);
   const [loreSearchQuery, setLoreSearchQuery] = useState('');
   const [stats, setStats] = useState<any>(null);
+  const [quests, setQuests] = useState<any[]>([]);
   const [showAIKitDemo, setShowAIKitDemo] = useState(false);
   const [aiKitPrompt, setAIKitPrompt] = useState('');
 
@@ -26,6 +28,7 @@ export default function Home() {
     fetchWorldState();
     fetchLore();
     fetchStats();
+    fetchQuests();
   }, []);
 
   const fetchPlayer = async () => {
@@ -192,6 +195,31 @@ export default function Home() {
     }
   };
 
+  const fetchQuests = async () => {
+    if (!player) return;
+    try {
+      const progressRes = await fetch(`/api/quest/progress?playerId=${player.id}&questId=default`);
+      if (progressRes.ok) {
+        const progress = await progressRes.json();
+        if (progress.questId) {
+          const objRes = await fetch(`/api/quest/objectives?questId=${progress.questId}`);
+          if (objRes.ok) {
+            const objectives = await objRes.json();
+            setQuests([{
+              questId: progress.questId,
+              status: progress.status,
+              objectives: Array.isArray(objectives) ? objectives : [],
+            }]);
+            return;
+          }
+        }
+      }
+      setQuests([]);
+    } catch (error) {
+      console.error('Error fetching quests:', error);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-slate-900 via-purple-900 to-slate-900 text-white p-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -300,6 +328,12 @@ export default function Home() {
               Help Village
             </button>
           </div>
+        </section>
+
+        {/* Quest Tracker */}
+        <section className="bg-slate-800/50 backdrop-blur rounded-lg p-6 border border-purple-500/20 shadow-xl">
+          <h3 className="text-2xl font-bold mb-4 text-purple-300">Quest Tracker</h3>
+          <QuestDisplay quests={quests} loading={loading && quests.length === 0} />
         </section>
 
         {/* Section 5: World Events Panel */}
