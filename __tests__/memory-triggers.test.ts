@@ -13,6 +13,17 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Detect whether the real pg package is installed. jest.config.js maps 'pg'
+// to a stub so require('pg') always succeeds; we must check the filesystem.
+const dbAvailable = fs.existsSync(
+  path.join(__dirname, '..', 'node_modules', 'pg', 'package.json')
+);
+
+const describeIfDb = dbAvailable ? describe : describe.skip;
+
 import {
   storeMemory,
   storeMemoryLoreQuestion,
@@ -31,7 +42,7 @@ import { closePool } from '../lib/db';
 const TEST_NPC_ID = '550e8400-e29b-41d4-a716-446655440000';
 const TEST_PLAYER_ID = '650e8400-e29b-41d4-a716-446655440001';
 
-describe('Memory Trigger Scenarios', () => {
+describeIfDb('Memory Trigger Scenarios', () => {
   beforeEach(async () => {
     await clearMemories();
   });
@@ -160,7 +171,7 @@ describe('Memory Trigger Scenarios', () => {
       const memories = await getMemories(TEST_NPC_ID, TEST_PLAYER_ID);
       expect(memories).toHaveLength(3);
       // All should have importance 3
-      memories.forEach(m => expect(m.importance).toBe(3));
+      memories.forEach((m: { importance: number }) => expect(m.importance).toBe(3));
     });
 
     it('should allow duplicate wolf defeats to track count', async () => {
@@ -263,7 +274,7 @@ describe('Memory Trigger Scenarios', () => {
 
       const memories = await getMemories(TEST_NPC_ID, TEST_PLAYER_ID);
       expect(memories).toHaveLength(3);
-      memories.forEach(m => expect(m.importance).toBe(1));
+      memories.forEach((m: { importance: number }) => expect(m.importance).toBe(1));
     });
   });
 

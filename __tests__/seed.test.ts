@@ -3,7 +3,7 @@
  * Refs #4
  */
 
-import { describe, it } from 'node:test';
+import { describe, it } from '@jest/globals';
 import assert from 'node:assert';
 import { getSeedNPC, getSeedLore, initializeSeedData, createSeedData } from '../lib/seed';
 import type { NPC, LoreEntry } from '../lib/types';
