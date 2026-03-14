@@ -5,6 +5,7 @@ import type { Player, NPCMemory, GameEvent, WorldEvent } from '@/lib/types';
 import ActionInput from '@/components/ActionInput';
 import NarrativeOutput from '@/components/NarrativeOutput';
 import QuestDisplay from '@/components/QuestDisplay';
+import WorldEventsDisplay from '@/components/WorldEventsDisplay';
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
@@ -339,29 +340,7 @@ export default function Home() {
         {/* Section 5: World Events Panel */}
         <section className="bg-slate-800/50 backdrop-blur rounded-lg p-6 border border-purple-500/20 shadow-xl">
           <h3 className="text-2xl font-bold mb-4 text-purple-300">World Events</h3>
-
-          {worldEvents.length === 0 ? (
-            <p className="text-gray-400 italic">No world events triggered yet...</p>
-          ) : (
-            <div className="space-y-3">
-              {worldEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-gradient-to-r from-yellow-900/30 to-orange-900/30 border border-yellow-500/30 rounded-lg p-4"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="text-xl font-bold text-yellow-300">{event.name}</h4>
-                      <p className="text-gray-300 mt-1">{event.description}</p>
-                    </div>
-                    <span className="text-xs text-gray-400 whitespace-nowrap ml-4">
-                      {new Date(event.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <WorldEventsDisplay events={worldEvents} />
         </section>
 
         {/* Section 6: NPC Memory Viewer */}
