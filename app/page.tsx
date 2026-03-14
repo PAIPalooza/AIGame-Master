@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import type { Player, NPCMemory, GameEvent, WorldEvent } from '@/lib/types';
+import ActionInput from '@/components/ActionInput';
 
 export default function Home() {
   const [player, setPlayer] = useState<Player | null>(null);
-  const [npcMessage, setNpcMessage] = useState('');
   const [npcResponse, setNpcResponse] = useState('');
   const [loading, setLoading] = useState(false);
   const [memories, setMemories] = useState<NPCMemory[]>([]);
@@ -55,8 +55,8 @@ export default function Home() {
     }
   };
 
-  const sendNPCMessage = async () => {
-    if (!npcMessage.trim() || !player) return;
+  const sendNPCMessage = async (message: string) => {
+    if (!message.trim() || !player) return;
 
     setLoading(true);
     try {
@@ -65,13 +65,12 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           playerId: player.id,
-          message: npcMessage
+          message,
         }),
       });
       if (res.ok) {
         const data = await res.json();
         setNpcResponse(data.response?.response || data.response || 'No response');
-        setNpcMessage('');
         await fetchMemories();
         await fetchEvents();
       }
@@ -258,24 +257,12 @@ export default function Home() {
           <h3 className="text-2xl font-bold mb-4 text-purple-300">Talk to Elarin</h3>
 
           <div className="space-y-4">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={npcMessage}
-                onChange={(e) => setNpcMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendNPCMessage()}
-                placeholder="Ask Elarin something..."
-                disabled={!player || loading}
-                className="flex-1 bg-slate-700 border border-purple-500/30 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
-              />
-              <button
-                onClick={sendNPCMessage}
-                disabled={!player || !npcMessage.trim() || loading}
-                className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold px-6 py-3 rounded-lg transition-colors duration-200"
-              >
-                Send
-              </button>
-            </div>
+            <ActionInput
+              onSubmit={sendNPCMessage}
+              disabled={!player}
+              loading={loading}
+              placeholder="Ask Elarin something..."
+            />
 
             {npcResponse && (
               <div className="bg-purple-900/30 border border-purple-500/30 rounded-lg p-4">
