@@ -1,15 +1,19 @@
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { generateNPCResponse, storeActionMemory } from '../lib/npc';
 import { searchLore } from '../lib/lore';
-import { clearMemories, getMemories } from '../lib/memory';
+import { getMemories } from '../lib/memory';
+import { clearAllData } from '../lib/data';
 
 describe('NPC Dialogue System', () => {
   const npcId = 'elarin-1';
   const playerId = 'player-1';
 
   beforeEach(() => {
-    // Clear memories before each test
-    clearMemories();
+    clearAllData();
+  });
+
+  afterEach(() => {
+    clearAllData();
   });
 
   describe('Lore Retrieval', () => {
@@ -38,8 +42,8 @@ describe('NPC Dialogue System', () => {
   });
 
   describe('NPC Response Generation', () => {
-    it('should return Ember Tower lore when asked', () => {
-      const response = generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
+    it('should return Ember Tower lore when asked', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
       
       expect(response.response).toBeTruthy();
       expect(response.response.toLowerCase()).toContain('tower');
@@ -47,8 +51,8 @@ describe('NPC Dialogue System', () => {
       expect(response.loreUsed[0].tags).toContain('ember tower');
     });
 
-    it('should return Moonvale lore when asked', () => {
-      const response = generateNPCResponse(npcId, playerId, 'Tell me about Moonvale');
+    it('should return Moonvale lore when asked', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'Tell me about Moonvale');
       
       expect(response.response).toBeTruthy();
       expect(response.response.toLowerCase()).toContain('moonvale');
@@ -56,8 +60,8 @@ describe('NPC Dialogue System', () => {
       expect(response.loreUsed[0].tags).toContain('moonvale');
     });
 
-    it('should return wolves lore when asked', () => {
-      const response = generateNPCResponse(npcId, playerId, 'Are there wolves in the forest?');
+    it('should return wolves lore when asked', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'Are there wolves in the forest?');
       
       expect(response.response).toBeTruthy();
       expect(response.response.toLowerCase()).toContain('wolves');
@@ -65,15 +69,15 @@ describe('NPC Dialogue System', () => {
       expect(response.loreUsed[0].tags).toContain('wolves');
     });
 
-    it('should provide greeting response', () => {
-      const response = generateNPCResponse(npcId, playerId, 'Hello');
+    it('should provide greeting response', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'Hello');
       
       expect(response.response).toBeTruthy();
       expect(response.response.toLowerCase()).toMatch(/greetings|welcome|elarin/);
     });
 
-    it('should provide help response', () => {
-      const response = generateNPCResponse(npcId, playerId, 'Can you help me?');
+    it('should provide help response', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'Can you help me?');
       
       expect(response.response).toBeTruthy();
       expect(response.response.toLowerCase()).toContain('knowledge');
@@ -81,29 +85,29 @@ describe('NPC Dialogue System', () => {
   });
 
   describe('Memory Integration', () => {
-    it('should store memory when player asks about Ember Tower', () => {
-      generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
+    it('should store memory when player asks about Ember Tower', async () => {
+      await generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
       
       const memories = getMemories(npcId, playerId);
       expect(memories.length).toBeGreaterThan(0);
       expect(memories[0].memory).toContain('Ember Tower');
     });
 
-    it('should reference player actions in responses', () => {
+    it('should reference player actions in responses', async () => {
       // Simulate player defeating wolves
-      storeActionMemory(npcId, playerId, 'wolf_kill');
-      
+      await storeActionMemory(npcId, playerId, 'wolf_kill');
+
       // Ask about wolves
-      const response = generateNPCResponse(npcId, playerId, 'Tell me about wolves');
+      const response = await generateNPCResponse(npcId, playerId, 'Tell me about wolves');
       
       expect(response.response).toContain('drove the wolves back');
       expect(response.memoriesReferenced.length).toBeGreaterThan(0);
     });
 
-    it('should not create duplicate memories', () => {
+    it('should not create duplicate memories', async () => {
       // Ask the same question twice
-      generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
-      generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
+      await generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
+      await generateNPCResponse(npcId, playerId, 'What happened to Ember Tower?');
       
       const memories = getMemories(npcId, playerId);
       // Should only have one memory entry for Ember Tower question
@@ -111,10 +115,10 @@ describe('NPC Dialogue System', () => {
       expect(emberMemories.length).toBe(1);
     });
 
-    it('should store action memories correctly', () => {
-      storeActionMemory(npcId, playerId, 'explore');
-      storeActionMemory(npcId, playerId, 'help_village');
-      storeActionMemory(npcId, playerId, 'wolf_kill');
+    it('should store action memories correctly', async () => {
+      await storeActionMemory(npcId, playerId, 'explore');
+      await storeActionMemory(npcId, playerId, 'help_village');
+      await storeActionMemory(npcId, playerId, 'wolf_kill');
       
       const memories = getMemories(npcId, playerId);
       expect(memories.length).toBe(3);
@@ -127,18 +131,18 @@ describe('NPC Dialogue System', () => {
   });
 
   describe('Deterministic Behavior', () => {
-    it('should return same response for same input without memory', () => {
-      clearMemories();
-      
-      const response1 = generateNPCResponse(npcId, 'player-test-1', 'What happened to Ember Tower?');
-      clearMemories();
-      const response2 = generateNPCResponse(npcId, 'player-test-2', 'What happened to Ember Tower?');
+    it('should return same response for same input without memory', async () => {
+      clearAllData();
+
+      const response1 = await generateNPCResponse(npcId, 'player-test-1', 'What happened to Ember Tower?');
+      clearAllData();
+      const response2 = await generateNPCResponse(npcId, 'player-test-2', 'What happened to Ember Tower?');
       
       // Both should contain the same lore content
       expect(response1.loreUsed[0].id).toBe(response2.loreUsed[0].id);
     });
 
-    it('should always work without external API calls', () => {
+    it('should always work without external API calls', async () => {
       // This test verifies no external dependencies
       const testCases = [
         'What happened to Ember Tower?',
@@ -147,30 +151,30 @@ describe('NPC Dialogue System', () => {
         'Hello',
         'Can you help me?'
       ];
-      
-      testCases.forEach(message => {
-        const response = generateNPCResponse(npcId, playerId, message);
+
+      for (const message of testCases) {
+        const response = await generateNPCResponse(npcId, playerId, message);
         expect(response.response).toBeTruthy();
         expect(typeof response.response).toBe('string');
         expect(response.response.length).toBeGreaterThan(0);
-      });
+      }
     });
   });
 
   describe('Edge Cases', () => {
-    it('should handle empty message', () => {
-      const response = generateNPCResponse(npcId, playerId, '');
+    it('should handle empty message', async () => {
+      const response = await generateNPCResponse(npcId, playerId, '');
       expect(response.response).toBeTruthy();
     });
 
-    it('should handle message with mixed case', () => {
-      const response = generateNPCResponse(npcId, playerId, 'What Happened To EMBER TOWER?');
+    it('should handle message with mixed case', async () => {
+      const response = await generateNPCResponse(npcId, playerId, 'What Happened To EMBER TOWER?');
       expect(response.response.toLowerCase()).toContain('tower');
       expect(response.loreUsed.length).toBeGreaterThan(0);
     });
 
-    it('should handle message with extra whitespace', () => {
-      const response = generateNPCResponse(npcId, playerId, '  ember   tower  ');
+    it('should handle message with extra whitespace', async () => {
+      const response = await generateNPCResponse(npcId, playerId, '  ember   tower  ');
       expect(response.response.toLowerCase()).toContain('tower');
       expect(response.loreUsed.length).toBeGreaterThan(0);
     });

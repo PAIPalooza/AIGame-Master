@@ -543,7 +543,7 @@ describe('File-based Storage System', () => {
             expect(count).toBe(3);
         });
 
-        it('sorts events by date (newest first)', () => {
+        it('sorts events by date (newest first)', async () => {
             const event1 = saveGameEvent({
                 player_id: 'player-1',
                 event_type: 'explore',
@@ -552,6 +552,8 @@ describe('File-based Storage System', () => {
             });
 
             // Small delay to ensure different timestamps
+            await new Promise(resolve => setTimeout(resolve, 10));
+
             const event2 = saveGameEvent({
                 player_id: 'player-1',
                 event_type: 'wolf_kill',
@@ -611,13 +613,16 @@ describe('File-based Storage System', () => {
             expect(events).toHaveLength(2);
         });
 
-        it('sorts world events by date (newest first)', () => {
+        it('sorts world events by date (newest first)', async () => {
             const event1 = saveWorldEvent({
                 event_name: 'Event 1',
                 description: 'Description 1',
                 trigger_source: 'system',
                 metadata: {},
             });
+
+            // Small delay to ensure different timestamps
+            await new Promise(resolve => setTimeout(resolve, 10));
 
             const event2 = saveWorldEvent({
                 event_name: 'Event 2',

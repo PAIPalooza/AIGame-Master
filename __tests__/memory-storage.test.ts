@@ -9,6 +9,17 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
+import * as fs from 'fs';
+import * as path from 'path';
+
+// Detect whether the real pg package is installed. jest.config.js maps 'pg'
+// to a stub so require('pg') always succeeds; we must check the filesystem.
+const dbAvailable = fs.existsSync(
+  path.join(__dirname, '..', 'node_modules', 'pg', 'package.json')
+);
+
+const describeIfDb = dbAvailable ? describe : describe.skip;
+
 import {
   createMemory,
   createMemoryIfNotExists,
@@ -34,7 +45,7 @@ const TEST_NPC_ID = '550e8400-e29b-41d4-a716-446655440000';
 const TEST_PLAYER_ID = '650e8400-e29b-41d4-a716-446655440001';
 const TEST_PLAYER_ID_2 = '750e8400-e29b-41d4-a716-446655440002';
 
-describe('Memory Storage Layer', () => {
+describeIfDb('Memory Storage Layer', () => {
   // Clean up before and after tests
   beforeEach(async () => {
     await deleteAllMemories();
